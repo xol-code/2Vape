@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2VAPE - Najlepszy Sklep</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #000; color: #fff; font-family: 'Segoe UI', sans-serif; scroll-behavior: smooth; }
+
+        /* WERYFIKACJA WIEKU */
+        #age-verification {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.98); display: flex; justify-content: center; align-items: center; z-index: 3000;
+        }
+        .age-box {
+            text-align: center; padding: 40px; border: 2px solid #00ffcc;
+            background: #111; border-radius: 20px; box-shadow: 0 0 40px #00ffcc; max-width: 400px;
+        }
+
+        /* NAWIGACJA */
+        nav {
+            background: rgba(10, 10, 10, 0.95); padding: 15px; text-align: center;
+            border-bottom: 1px solid #00ffcc; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; align-items: center;
+        }
+        nav a { color: white; text-decoration: none; margin: 0 15px; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        nav a:hover { color: #00ffcc; }
+        
+        .cart-icon { background: #00ffcc; color: #000; padding: 5px 15px; border-radius: 20px; margin-left: 20px; cursor: pointer; font-weight: bold; }
+
+        header { text-align: center; padding: 60px 20px; }
+        h1 { font-size: 4rem; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; margin: 0; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .category-title { border-left: 5px solid #00ffcc; padding-left: 15px; margin: 40px 0 20px; color: #00ffcc; }
+        
+        /* KARTA PRODUKTU */
+        .card {
+            background: #0a0a0a; padding: 20px; border-radius: 12px; border: 1px solid #222;
+            text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .card:hover { border-color: #00ffcc; transform: translateY(-5px); }
+        .product-image { width: 100%; height: 130px; object-fit: contain; margin-bottom: 10px; background: #1a1a1a; border-radius: 8px; line-height: 130px; color: #333; }
+        .price { font-size: 1.2rem; color: #00ffcc; font-weight: bold; margin: 10px 0; }
+        .stock { font-size: 0.8rem; color: #666; margin-bottom: 10px; }
+        
+        .btn {
+            background: transparent; color: #00ffcc; border: 1px solid #00ffcc;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;
+        }
+        .btn:hover { background: #00ffcc; color: #000; }
+
+        /* KOSZYK - MODAL */
+        #cart-modal, #order-confirmation {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal-content {
+            background: #111; padding: 30px; border-radius: 15px; border: 2px solid #00ffcc;
+            width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;
+        }
+        .cart-item { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0; }
+        .total { font-size: 1.5rem; text-align: right; margin-top: 20px; color: #00ffcc; }
+
+        footer { text-align: center; padding: 40px; color: #444; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <div id="age-verification">
+        <div class="age-box">
+            <h2>WERYFIKACJA 11+</h2>
+            <p>Ta strona zawiera produkty tylko dla osób powyżej 11 roku życia.</p>
+            <button class="btn" onclick="document.getElementById('age-verification').style.display='none'">MAM 11 LAT</button>
+            <button class="btn" style="color:red; border-color:red; margin-top:10px;" onclick="window.location.href='https://google.com'">WYJDŹ</button>
+        </div>
+    </div>
+
+    <div id="cart-modal">
+        <div class="modal-content">
+            <h2>Twój Koszyk</h2>
+            <div id="cart-items-list"></div>
+            <div class="total">Suma: <span id="cart-total-price">0</span> PLN</div>
+            <p><strong>Płatność:</strong> Gotówka przy odbiorze</p>
+            <button class="btn" onclick="placeOrder()">POTWIERDZAM ZAMÓWIENIE</button>
+            <button class="btn" style="margin-top:10px; border-color:#666; color:#666;" onclick="toggleCart()">WRÓĆ</button>
+        </div>
+    </div>
+
+    <div id="order-confirmation">
+        <div class="modal-content" style="text-align: center;">
+            <h2 style="color: #00ffcc;">ZAMÓWIENIE PRZYJĘTE!</h2>
+            <div id="order-summary-list" style="text-align: left; background: #000; padding: 15px; border-radius: 10px; margin: 15px 0;"></div>
+            <p class="total">Do zapłaty: <span id="final-price">0</span> PLN</p>
+            <p>Przygotuj gotówkę i czekaj na kontakt w sprawie odbioru.</p>
+            <button class="btn" onclick="location.reload()">OK</button>
+        </div>
+    </div>
+
+    <nav>
+        <a href="#e-papierosy">E-PAPY</a>
+        <a href="#liquidy">LIQUIDY</a>
+        <a href="#grzalki">GRZAŁKI</a>
+        <div class="cart-icon" onclick="toggleCart()">🛒 KOSZYK (<span id="cart-count">0</span>)</div>
+    </nav>
+
+    <header>
+        <h1>2VAPE</h1>
+        <p>Premium Shop | Tylko Gotówka</p>
+    </header>
+
+    <div class="container">
+        
+        <h2 id="e-papierosy" class="category-title">E-Papierosy</h2>
+        <div class="grid">
+            <div class="card">
+                <div class="product-image">IMAGE</div>
+                <h3>Oxva Xlim Pro</h3>
+                <div class="price">200 PLN</div>
+                <button class="btn" onclick="addToCart('Oxva Xlim Pro', 200)">DODAJ</button>
+            </div>
+            <div class="card">
+                <div class="product-image">IMAGE</div>
+                <h3>Oxva Xlim SQ Pro</h3>
+                <div class="price">210 PLN</div>
+                <button class="btn" onclick="addToCart('Oxva Xlim SQ Pro', 210)">DODAJ</button>
+            </div>
+            <div class="card">
+                <div class="product-image">IMAGE</div>
+                <h3>Vaporesso Luxe XR Max</h3>
+                <div class="price">230 PLN</div>
+                <button class="btn" onclick="addToCart('Vaporesso Luxe XR Max', 230)">DODAJ</button>
+            </div>
+            <div class="card">
+                <div class="product-image">IMAGE</div>
+                <h3>GeekVape L200 (Legend 2)</h3>
+                <div class="price">280 PLN</div>
+                <button class="btn" onclick="addToCart('GeekVape L200', 280)">DODAJ</button>
+            </div>
+            <div class="card">
+                <div class="product-image">IMAGE</div>
+                <h3>Thelema Solo 100W</h3>
+                <div class="price">245 PLN</div>
+                <button class="btn" onclick="addToCart('Thelema Solo', 245)">DODAJ</button>
+            </div>
+        </div>
+
+        <h2 id="liquidy" class="category-title">Liquidy (35 PLN / butelka)</h2>
+        <div class="grid">
+            <script>
+                const vbar = ["VBAR: Lush Ice", "VBAR: Peach Ice", "VBAR: Blue Razz", "VBAR: Mango Ice", "VBAR: Strawberry", "VBAR: Grape", "VBAR: Watermelon", "VBAR: Cola"];
+                vbar.forEach(name => {
+                    document.write(`<div class="card"><div class="product-image">VBAR</div><h3>${name}</h3><div class="price">35 PLN</div><button class="btn" onclick="addToCart('${name}', 35)">DODAJ</button></div>`);
+                });
+                const sck = ["SCK Salt: Cytryna", "SCK Salt: Jagoda", "SCK Salt: Arbuz"];
+                sck.forEach(name => {
+                    document.write(`<div class="card"><div class="product-image">SCK</div><h3>${name}</h3><div class="price">35 PLN</div><button class="btn" onclick="addToCart('${name}', 35)">DODAJ</button></div>`);
+                });
+                const jf = ["Just Fake: Apple", "Just Fake: Donut", "Just Fake: Cactus"];
+                jf.forEach(name => {
+                    document.write(`<div class="card"><div class="product-image">JF</div><h3>${name}</h3><div class="price">35 PLN</div><button class="btn" onclick="addToCart('${name}', 35)">DODAJ</button></div>`);
+                });
+            </script>
+        </div>
+
+        <h2 id="grzalki" class="category-title">Grzałki / Kartridże</h2>
+        <div class="grid">
+            <div class="card"><h3>Kartridż Oxva 0.4 Ω</h3><div class="price">22 PLN</div><button class="btn" onclick="addToCart('Kartridż 0.4', 22)">DODAJ</button></div>
+            <div class="card"><h3>Kartridż Oxva 0.6 Ω</h3><div class="price">22 PLN</div><button class="btn" onclick="addToCart('Kartridż 0.6', 22)">DODAJ</button></div>
+            <div class="card"><h3>Kartridż Oxva 0.8 Ω</h3><div class="price">22 PLN</div><button class="btn" onclick="addToCart('Kartridż 0.8', 22)">DODAJ</button></div>
+            <div class="card"><h3>Grzałka Vaporesso GTX 0.2</h3><div class="price">18 PLN</div><button class="btn" onclick="addToCart('Grzałka GTX 0.2', 18)">DODAJ</button></div>
+            <div class="card"><h3>Grzałka GeekVape Z 0.2</h3><div class="price">20 PLN</div><button class="btn" onclick="addToCart('Grzałka Z 0.2', 20)">DODAJ</button></div>
+            <div class="card"><h3>Grzałka GeekVape Z 0.4</h3><div class="price">20 PLN</div><button class="btn" onclick="addToCart('Grzałka Z 0.4', 20)">DODAJ</button></div>
+        </div>
+    </div>
+
+    <footer>&copy; 2026 2VAPE. Tylko gotówka przy odbiorze.</footer>
+
+    <script>
+        let cart = [];
+
+        function addToCart(name, price) {
+            cart.push({ name, price });
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const list = document.getElementById('cart-items-list');
+            const totalSpan = document.getElementById('cart-total-price');
+            list.innerHTML = "";
+            let total = 0;
+            cart.forEach(item => {
+                total += item.price;
+                list.innerHTML += `<div class="cart-item"><span>${item.name}</span><span>${item.price} PLN</span></div>`;
+            });
+            totalSpan.innerText = total;
+        }
+
+        function toggleCart() {
+            const modal = document.getElementById('cart-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function placeOrder() {
+            if (cart.length === 0) return alert("Pusty koszyk!");
+            const summary = document.getElementById('order-summary-list');
+            const finalPrice = document.getElementById('final-price');
+            let total = 0;
+            summary.innerHTML = "";
+            cart.forEach(item => {
+                total += item.price;
+                summary.innerHTML += `<div>• ${item.name}</div>`;
+            });
+            finalPrice.innerText = total;
+            document.getElementById('cart-modal').style.display = 'none';
+            document.getElementById('order-confirmation').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
